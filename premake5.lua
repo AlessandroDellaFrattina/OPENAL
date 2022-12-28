@@ -9,17 +9,17 @@ project "OPENAL"
 	includedirs {
 
 		"include",
-    "common",
-    "core",
-    "router",
-    "utils"
+    		"common",
+    		"core",
+    		"router",
+    		"utils"
 	}
 
-  files {
+  	files {
 
-    "**.c",
-    "**.cpp"
-  }
+    		"**.c",
+    		"**.cpp"
+  	}
 
 	filter "system:windows"
 		systemversion "latest"
