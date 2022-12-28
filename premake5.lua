@@ -1,6 +1,7 @@
 project "OPENAL"
 	kind "StaticLib"
 	language "C++"
+	cppdialect "C++17"
 	staticruntime "On"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
