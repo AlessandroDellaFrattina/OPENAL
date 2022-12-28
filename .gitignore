@@ -7,3 +7,31 @@ win64build
 
 ## qt-creator
 CMakeLists.txt.user*
+
+# Binaries Folders
+**/bin/
+**/bin-int/
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Fortran module files
+*.mod
+*.smod
+
+# Visual Studio Files
+.vs/
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user

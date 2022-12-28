@@ -27,8 +27,15 @@ project "OPENAL"
 
 		defines {
 
+			"VULTURE_PLATFORM_WINDOWS",
 			"_CRT_SECURE_NO_WARNINGS"
 		}
+
+	filter "system:linux"
+		defines "VULTURE_PLATFORM_LINUX"
+
+	filter "system:macosx"
+		defines "VULTURE_PLATFORM_MACOSX"
 
 	filter "configurations:Debug"
 		defines "VULTURE_DEBUG"
