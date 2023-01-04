@@ -279,10 +279,10 @@ project "OPENAL"
 			"alc/effects/vmorpher.cpp",
 			"al/effects/vmorpher.cpp",
 			"core/voice.cpp",
+			"alc/backends/wave.cpp",
 
 			"alc/backends/dsound.cpp",
 			"alc/backends/wasapi.cpp",
-			"alc/backends/wave.cpp",
 			"alc/backends/winmm.cpp"
 		}
 
@@ -408,6 +408,7 @@ project "OPENAL"
 			"alc/effects/vmorpher.cpp",
 			"al/effects/vmorpher.cpp",
 			"core/voice.cpp",
+			"alc/backends/wave.cpp",
 
 			"alc/backends/coreaudio.cpp"
 		}
