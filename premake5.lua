@@ -296,8 +296,8 @@ project "OPENAL"
 			"VULTURE_PLATFORM_MACOSX",
 			"AL_BUILD_LIBRARY",
 			"AL_ALEXT_PROTOTYPES",
-			"ALC_API=__attribute__((visibility(\"Default\")))",
-			"AL_API=__attribute__((visibility(\"Default\")))",
+			"ALC_API=__attribute__((visibility(\"default\")))",
+			"AL_API=__attribute__((visibility(\"default\")))",
 			"RESTRICT=__restrict",
 			"OpenAL_EXPORTS"
 		}
