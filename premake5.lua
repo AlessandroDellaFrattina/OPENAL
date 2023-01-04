@@ -86,6 +86,23 @@ project "COMMON"
 			"common"
 		}
 
+		files {
+
+			"config.h",
+			"version.h",
+			"hrtf_default.h",
+
+			"common/alcomplex.cpp",
+			"common/alfstream.cpp",
+			"common/almalloc.cpp",
+			"common/alstring.cpp",
+			"common/dynload.cpp",
+			"common/polyphase_resampler.cpp",
+			"common/ringbuffer.cpp",
+			"common/strutils.cpp",
+			"common/threads.cpp"
+		}
+
 	filter "configurations:Debug"
 		defines "VULTURE_DEBUG"
 		runtime "Debug"
