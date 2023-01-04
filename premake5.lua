@@ -26,7 +26,8 @@ project "COMMON"
 			"_WIN32",
 			"NOMINMAX",
 			"RESTRICT=__restrict",
-			"_CRT_SECURE_NO_WARNINGS"
+			"_CRT_SECURE_NO_WARNINGS",
+			"_MBCS"
 		}
 
 		disablewarnings {
@@ -38,6 +39,8 @@ project "COMMON"
 			"5030",
 			"5051"
 		}
+
+		conformancemode "On"
 
 		files {
 
@@ -112,7 +115,9 @@ project "OPENAL"
 			"NOMINMAX",
 			"RESTRICT=__restrict",
 			"_CRT_SECURE_NO_WARNINGS",
-			"OpenAL_EXPORTS"
+			"OpenAL_EXPORTS",
+			"_WINDLL",
+			"_MBCS"
 		}
 
 		disablewarnings {
@@ -124,6 +129,8 @@ project "OPENAL"
 			"5030",
 			"5051"
 		}
+
+		conformancemode "On"
 
 		links {
 
