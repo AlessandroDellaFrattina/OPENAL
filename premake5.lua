@@ -320,7 +320,7 @@ project "OPENAL"
 
 		links {
 
-			"-dynamiclib","
+			"-dynamiclib",
 			"-Wl,-headerpad_max_install_names",
 			"-install_name",
 			"@rpath/libopenal.1.dylib",
