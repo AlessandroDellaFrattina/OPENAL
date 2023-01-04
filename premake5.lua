@@ -65,6 +65,14 @@ project "COMMON"
 	filter "system:macosx"
 		defines "VULTURE_PLATFORM_MACOSX"
 
+		externalincludedirs {
+
+			"%{prj.location}",
+			"include",
+			"include/AL",
+			"common"
+		}
+
 	filter "configurations:Debug"
 		defines "VULTURE_DEBUG"
 		runtime "Debug"
@@ -252,6 +260,14 @@ project "OPENAL"
 
 	filter "system:macosx"
 		defines "VULTURE_PLATFORM_MACOSX"
+
+		externalincludedirs {
+
+			"%{prj.location}",
+			"include",
+			"include/AL",
+			"common"
+		}
 
 	filter "configurations:Debug"
 		defines "VULTURE_DEBUG"
