@@ -63,7 +63,12 @@ project "COMMON"
 		defines "VULTURE_PLATFORM_LINUX"
 
 	filter "system:macosx"
-		defines "VULTURE_PLATFORM_MACOSX"
+
+		defines {
+
+			"VULTURE_PLATFORM_MACOSX",
+			"RESTRICT=__restrict"
+		}
 
 		sysincludedirs {
 
@@ -205,7 +210,6 @@ project "OPENAL"
 			"alc/device.cpp",
 			"alc/effects/distortion.cpp",
 			"al/effects/distortion.cpp",
-			"alc/backends/dsound.cpp",
 			"alc/effects/echo.cpp",
 			"al/effects/echo.cpp",
 			"al/effect.cpp",
@@ -258,6 +262,8 @@ project "OPENAL"
 			"alc/effects/vmorpher.cpp",
 			"al/effects/vmorpher.cpp",
 			"core/voice.cpp",
+
+			"alc/backends/dsound.cpp",
 			"alc/backends/wasapi.cpp",
 			"alc/backends/wave.cpp",
 			"alc/backends/winmm.cpp"
@@ -267,7 +273,25 @@ project "OPENAL"
 		defines "VULTURE_PLATFORM_LINUX"
 
 	filter "system:macosx"
-		defines "VULTURE_PLATFORM_MACOSX"
+
+		defines {
+
+			"VULTURE_PLATFORM_MACOSX",
+			"AL_BUILD_LIBRARY",
+			"AL_ALEXT_PROTOTYPES",
+			"ALC_API=__attribute__((visibility(\"Default\")))",
+			"AL_API=__attribute__((visibility(\"Default\")))",
+			"RESTRICT=__restrict",
+			"OpenAL_EXPORTS"
+		}
+
+		sysincludedirs {
+
+			"%{prj.location}",
+			"include",
+			"include/AL",
+			"common"
+		}
 
 		externalincludedirs {
 
@@ -275,6 +299,107 @@ project "OPENAL"
 			"include",
 			"include/AL",
 			"common"
+		}
+
+		links {
+
+			"COMMON"
+		}
+
+		files {
+
+			"config.h",
+			"version.h",
+			"hrtf_default.h",
+
+			"alc/alc.cpp",
+			"alc/alconfig.cpp",
+			"alc/alu.cpp",
+			"core/ambdec.cpp",
+			"core/ambidefs.cpp",
+			"al/eax/api.cpp",
+			"al/effects/autowah.cpp",
+			"alc/effects/autowah.cpp",
+			"al/auxeffectslot.cpp",
+			"alc/backends/base.cpp",
+			"core/bformatdec.cpp",
+			"core/filters/biquad.cpp",
+			"core/bs2b.cpp",
+			"core/bsinc_tables.cpp",
+			"al/buffer.cpp",
+			"core/buffer_storage.cpp",
+			"al/eax/call.cpp",
+			"alc/effects/chorus.cpp",
+			"al/effects/chorus.cpp",
+			"al/effects/compressor.cpp",
+			"alc/effects/compressor.cpp",
+			"core/context.cpp",
+			"alc/context.cpp",
+			"core/converter.cpp",
+			"alc/effects/convolution.cpp",
+			"al/effects/convolution.cpp",
+			"core/cpu_caps.cpp",
+			"alc/effects/dedicated.cpp",
+			"al/effects/dedicated.cpp",
+			"core/devformat.cpp",
+			"core/device.cpp",
+			"alc/device.cpp",
+			"alc/effects/distortion.cpp",
+			"al/effects/distortion.cpp",
+			"alc/effects/echo.cpp",
+			"al/effects/echo.cpp",
+			"al/effect.cpp",
+			"al/effects/effects.cpp",
+			"core/effectslot.cpp",
+			"alc/effects/equalizer.cpp",
+			"al/effects/equalizer.cpp",
+			"al/error.cpp",
+			"al/event.cpp",
+			"core/except.cpp",
+			"al/eax/exception.cpp",
+			"al/extension.cpp",
+			"al/filter.cpp",
+			"core/fmt_traits.cpp",
+			"core/fpu_ctrl.cpp",
+			"al/effects/fshifter.cpp",
+			"alc/effects/fshifter.cpp",
+			"al/eax/fx_slot_index.cpp",
+			"al/eax/fx_slots.cpp",
+			"al/eax/globals.cpp",
+			"core/helpers.cpp",
+			"core/hrtf.cpp",
+			"al/listener.cpp",
+			"core/logging.cpp",
+			"alc/backends/loopback.cpp",
+			"core/mastering.cpp",
+			"core/mixer.cpp",
+			"core/mixer/mixer_c.cpp",
+			"core/mixer/mixer_sse.cpp",
+			"core/mixer/mixer_sse2.cpp",
+			"core/mixer/mixer_sse3.cpp",
+			"core/mixer/mixer_sse41.cpp",
+			"al/effects/modulator.cpp",
+			"alc/effects/modulator.cpp",
+			"core/filters/nfc.cpp",
+			"al/effects/null.cpp",
+			"alc/effects/null.cpp",
+			"alc/backends/null.cpp",
+			"alc/panning.cpp",
+			"alc/effects/pshifter.cpp",
+			"al/effects/pshifter.cpp",
+			"alc/effects/reverb.cpp",
+			"al/effects/reverb.cpp",
+			"al/source.cpp",
+			"core/filters/splitter.cpp",
+			"al/state.cpp",
+			"core/uhjfilter.cpp",
+			"core/uiddefs.cpp",
+			"al/eax/utils.cpp",
+			"alc/effects/vmorpher.cpp",
+			"al/effects/vmorpher.cpp",
+			"core/voice.cpp",
+
+			"alc/backends/coreaudio.cpp"
 		}
 
 	filter "configurations:Debug"
