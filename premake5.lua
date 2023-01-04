@@ -320,6 +320,11 @@ project "OPENAL"
 
 		links {
 
+			"COMMON"
+		}
+
+		linkoptions {
+
 			"dynamiclib",
 			"Wl,-headerpad_max_install_names",
 			"install_name",
@@ -329,9 +334,8 @@ project "OPENAL"
 			"Wl,-framework,CoreAudio",
 			"ldl",
 			"lm",
-
-			"COMMON"
 		}
+
 
 		files {
 
