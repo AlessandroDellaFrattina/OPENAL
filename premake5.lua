@@ -320,6 +320,17 @@ project "OPENAL"
 
 		links {
 
+			"-dynamiclib","
+			"-Wl,-headerpad_max_install_names",
+			"-install_name",
+			"@rpath/libopenal.1.dylib",
+			"-pthread",
+			"-Wl,-framework,AudioToolbox",
+			"-Wl,-framework,AudioUnit,-framework,ApplicationServices",
+			"-Wl,-framework,CoreAudio",
+			"-ldl",
+			"-lm",
+
 			"COMMON"
 		}
 
