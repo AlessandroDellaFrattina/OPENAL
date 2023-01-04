@@ -46,9 +46,6 @@
 //MACOS
 #elif defined(VULTURE_PLATFORM_MACOSX)
 
-/* Define if deprecated EAX extensions are enabled */
-#define ALSOFT_EAX
-
 /* Define if HRTF data is embedded in the library */
 #define ALSOFT_EMBED_HRTF_DATA
 
