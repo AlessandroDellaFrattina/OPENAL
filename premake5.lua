@@ -65,6 +65,14 @@ project "COMMON"
 	filter "system:macosx"
 		defines "VULTURE_PLATFORM_MACOSX"
 
+		sysincludedirs {
+
+			"%{prj.location}",
+			"include",
+			"include/AL",
+			"common"
+		}
+
 		externalincludedirs {
 
 			"%{prj.location}",
