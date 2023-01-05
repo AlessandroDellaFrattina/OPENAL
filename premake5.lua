@@ -1,4 +1,4 @@
-project "COMMON"
+project "OPENAL"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++14"
@@ -15,126 +15,14 @@ project "COMMON"
 		"common"
 	}
 
-	filter "system:windows"
-		systemversion "latest"
+	disablewarnings {
 
-		defines {
-
-			"VULTURE_PLATFORM_WINDOWS",
-			"WIN32",
-			"_WINDOWS",
-			"_WIN32",
-			"NOMINMAX",
-			"RESTRICT=__restrict",
-			"_CRT_SECURE_NO_WARNINGS",
-			"_MBCS"
-		}
-
-		disablewarnings {
-
-			"4065",
-			"4127",
-			"4268",
-			"4324",
-			"5030",
-			"5051"
-		}
-
-		conformancemode "On"
-
-		files {
-
-			"config.h",
-			"version.h",
-			"hrtf_default.h",
-
-			"common/alcomplex.cpp",
-			"common/alfstream.cpp",
-			"common/almalloc.cpp",
-			"common/alstring.cpp",
-			"common/dynload.cpp",
-			"common/polyphase_resampler.cpp",
-			"common/ringbuffer.cpp",
-			"common/strutils.cpp",
-			"common/threads.cpp"
-		}
-
-	filter "system:linux"
-		defines "VULTURE_PLATFORM_LINUX"
-
-	filter "system:macosx"
-
-		defines {
-
-			"VULTURE_PLATFORM_MACOSX",
-			"RESTRICT=__restrict"
-		}
-
-		sysincludedirs {
-
-			"%{prj.location}",
-			"include",
-			"include/AL",
-			"common"
-		}
-
-		externalincludedirs {
-
-			"%{prj.location}",
-			"include",
-			"include/AL",
-			"common"
-		}
-
-		files {
-
-			"config.h",
-			"version.h",
-			"hrtf_default.h",
-
-			"common/alcomplex.cpp",
-			"common/alfstream.cpp",
-			"common/almalloc.cpp",
-			"common/alstring.cpp",
-			"common/dynload.cpp",
-			"common/polyphase_resampler.cpp",
-			"common/ringbuffer.cpp",
-			"common/strutils.cpp",
-			"common/threads.cpp"
-		}
-
-	filter "configurations:Debug"
-		defines "VULTURE_DEBUG"
-		runtime "Debug"
-		symbols "On"
-
-	filter "configurations:Release"
-		defines "VULTURE_RELEASE"
-		runtime "Debug"
-		symbols "On"
-		optimize "On"
-
-	filter "configurations:Dist"
-		defines "VULTURE_DIST"
-		runtime "Release"
-		optimize "On"
-
-
-project "OPENAL"
-	kind "SharedLib"
-	language "C++"
-	cppdialect "C++14"
-	staticruntime "On"
-
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
-
-	includedirs {
-
-		"%{prj.location}",
-		"include",
-		"include/AL",
-		"common"
+		"4065",
+		"4127",
+		"4268",
+		"4324",
+		"5030",
+		"5051"
 	}
 
 	filter "system:windows"
@@ -143,55 +31,37 @@ project "OPENAL"
 		defines {
 
 			"VULTURE_PLATFORM_WINDOWS",
+			"AL_LIBTYPE_STATIC",
 			"WIN32",
 			"_WINDOWS",
 			"AL_BUILD_LIBRARY",
 			"AL_ALEXT_PROTOTYPES",
-			"ALC_API=__declspec(dllexport)",
-			"AL_API=__declspec(dllexport)",
+			"ALC_API=",
+			"AL_API=",
 			"_WIN32",
 			"NOMINMAX",
 			"RESTRICT=__restrict",
 			"_CRT_SECURE_NO_WARNINGS",
-			"OpenAL_EXPORTS",
-			"_WINDLL",
-			"_MBCS"
-		}
-
-		disablewarnings {
-
-			"4065",
-			"4127",
-			"4268",
-			"4324",
-			"5030",
-			"5051"
+			"OpenAL_EXPORTS"
 		}
 
 		conformancemode "On"
-
-		links {
-
-			"winmm.lib",
-			"kernel32.lib",
-			"user32.lib",
-			"gdi32.lib",
-			"winspool.lib",
-			"shell32.lib",
-			"ole32.lib",
-			"oleaut32.lib",
-			"uuid.lib",
-			"comdlg32.lib",
-			"advapi32.lib",
-
-			"COMMON"
-		}
 
 		files {
 
 			"config.h",
 			"version.h",
 			"hrtf_default.h",
+
+			"common/alcomplex.cpp",
+			"common/alfstream.cpp",
+			"common/almalloc.cpp",
+			"common/alstring.cpp",
+			"common/dynload.cpp",
+			"common/polyphase_resampler.cpp",
+			"common/ringbuffer.cpp",
+			"common/strutils.cpp",
+			"common/threads.cpp",
 
 			"alc/alc.cpp",
 			"alc/alconfig.cpp",
@@ -296,10 +166,11 @@ project "OPENAL"
 			"VULTURE_PLATFORM_MACOSX",
 			"AL_BUILD_LIBRARY",
 			"AL_ALEXT_PROTOTYPES",
-			"ALC_API=__attribute__((visibility(\"default\")))",
-			"AL_API=__attribute__((visibility(\"default\")))",
+			"ALC_API=",
+			"AL_API=",
 			"RESTRICT=__restrict",
-			"OpenAL_EXPORTS"
+			"OpenAL_EXPORTS",
+			"AL_LIBTYPE_STATIC"
 		}
 
 		sysincludedirs {
@@ -318,30 +189,21 @@ project "OPENAL"
 			"common"
 		}
 
-		links {
-
-			"COMMON"
-		}
-
-		linkoptions {
-
-			"-dynamiclib",
-			"-Wl,-headerpad_max_install_names",
-			"-install_name",
-			"-pthread",
-			"-Wl,-framework,AudioToolbox",
-			"-Wl,-framework,AudioUnit,-framework,ApplicationServices",
-			"-Wl,-framework,CoreAudio",
-			"-ldl",
-			"-lm",
-		}
-
-
 		files {
 
 			"config.h",
 			"version.h",
 			"hrtf_default.h",
+
+			"common/alcomplex.cpp",
+			"common/alfstream.cpp",
+			"common/almalloc.cpp",
+			"common/alstring.cpp",
+			"common/dynload.cpp",
+			"common/polyphase_resampler.cpp",
+			"common/ringbuffer.cpp",
+			"common/strutils.cpp",
+			"common/threads.cpp",
 
 			"alc/alc.cpp",
 			"alc/alconfig.cpp",
