@@ -161,6 +161,8 @@ project "OPENAL"
 
 	filter "system:macosx"
 
+		systemversion "max"
+
 		defines {
 
 			"VULTURE_PLATFORM_MACOSX",
