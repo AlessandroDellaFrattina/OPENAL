@@ -26,6 +26,7 @@ project "OPENAL"
 	}
 
 	filter "system:windows"
+
 		systemversion "latest"
 
 		defines {
@@ -173,14 +174,6 @@ project "OPENAL"
 			"RESTRICT=__restrict",
 			"OpenAL_EXPORTS",
 			"AL_LIBTYPE_STATIC"
-		}
-
-		sysincludedirs {
-
-			"%{prj.location}",
-			"include",
-			"include/AL",
-			"common"
 		}
 
 		externalincludedirs {
