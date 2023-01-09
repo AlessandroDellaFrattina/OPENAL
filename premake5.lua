@@ -160,6 +160,7 @@ project "OPENAL"
 	filter "system:linux"
 
 		systemversion "latest"
+		pic "On"
 
 		defines {
 
@@ -184,6 +185,7 @@ project "OPENAL"
 	filter "system:macosx"
 
 		systemversion "max"
+		pic "On"
 
 		defines {
 
