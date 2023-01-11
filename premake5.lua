@@ -182,6 +182,11 @@ project "OPENAL"
 			"common"
 		}
 
+		files {
+
+			"alc/backends/oss.cpp"
+		}
+
 	filter "system:macosx"
 
 		systemversion "max"
