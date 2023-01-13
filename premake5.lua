@@ -184,6 +184,7 @@ project "OPENAL"
 
 		files {
 
+			"alc/backends/alsa.cpp",
 			"alc/backends/oss.cpp"
 		}
 
