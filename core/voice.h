@@ -5,13 +5,12 @@
 #include <atomic>
 #include <bitset>
 #include <chrono>
+#include <cstddef>
 #include <memory>
-#include <stddef.h>
+#include <optional>
 #include <string>
 
-#include "albyte.h"
 #include "almalloc.h"
-#include "aloptional.h"
 #include "alspan.h"
 #include "bufferline.h"
 #include "buffer_storage.h"
@@ -49,10 +48,7 @@ enum class DirectMode : unsigned char {
 };
 
 
-/* Maximum number of extra source samples that may need to be loaded, for
- * resampling or conversion purposes.
- */
-constexpr uint MaxPostVoiceLoad{MaxResamplerEdge + DecoderBase::sMaxPadding};
+constexpr uint MaxPitch{10};
 
 
 enum {
@@ -98,11 +94,12 @@ struct VoiceBufferItem {
     CallbackType mCallback{nullptr};
     void *mUserData{nullptr};
 
+    uint mBlockAlign{0u};
     uint mSampleLen{0u};
     uint mLoopStart{0u};
     uint mLoopEnd{0u};
 
-    al::byte *mSamples{nullptr};
+    std::byte *mSamples{nullptr};
 };
 
 
@@ -217,7 +214,8 @@ struct Voice {
     FmtType mFmtType;
     uint mFrequency;
     uint mFrameStep; /**< In steps of the sample type size. */
-    uint mFrameSize; /**< In bytes. */
+    uint mBytesPerBlock; /**< Or for PCM formats, BytesPerFrame. */
+    uint mSamplesPerBlock; /**< Always 1 for PCM formats. */
     AmbiLayout mAmbiLayout;
     AmbiScaling mAmbiScaling;
     uint mAmbiOrder;
@@ -233,7 +231,8 @@ struct Voice {
     InterpState mResampleState;
 
     std::bitset<VoiceFlagCount> mFlags{};
-    uint mNumCallbackSamples{0};
+    uint mNumCallbackBlocks{0};
+    uint mCallbackBlockBase{0};
 
     struct TargetData {
         int FilterType;
@@ -270,7 +269,7 @@ struct Voice {
 
     void prepare(DeviceBase *device);
 
-    static void InitMixer(al::optional<std::string> resampler);
+    static void InitMixer(std::optional<std::string> resampler);
 
     DEF_NEWDEL(Voice)
 };

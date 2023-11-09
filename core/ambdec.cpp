@@ -47,13 +47,13 @@ enum class ReaderScope {
 #else
 [[gnu::format(printf,2,3)]]
 #endif
-al::optional<std::string> make_error(size_t linenum, const char *fmt, ...)
+std::optional<std::string> make_error(size_t linenum, const char *fmt, ...)
 {
-    al::optional<std::string> ret;
+    std::optional<std::string> ret;
     auto &str = ret.emplace();
 
     str.resize(256);
-    int printed{std::snprintf(&str[0], str.length(), "Line %zu: ", linenum)};
+    int printed{std::snprintf(const_cast<char*>(str.data()), str.length(), "Line %zu: ", linenum)};
     if(printed < 0) printed = 0;
     auto plen = std::min(static_cast<size_t>(printed), str.length());
 
@@ -61,7 +61,7 @@ al::optional<std::string> make_error(size_t linenum, const char *fmt, ...)
     va_start(args, fmt);
     va_copy(args2, args);
     const int msglen{std::vsnprintf(&str[plen], str.size()-plen, fmt, args)};
-    if(msglen >= 0 && static_cast<size_t>(msglen) >= str.size()-plen) [[unlikely]]
+    if(msglen >= 0 && static_cast<size_t>(msglen) >= str.size()-plen)
     {
         str.resize(static_cast<size_t>(msglen) + plen + 1u);
         std::vsnprintf(&str[plen], str.size()-plen, fmt, args2);
@@ -77,11 +77,11 @@ al::optional<std::string> make_error(size_t linenum, const char *fmt, ...)
 AmbDecConf::~AmbDecConf() = default;
 
 
-al::optional<std::string> AmbDecConf::load(const char *fname) noexcept
+std::optional<std::string> AmbDecConf::load(const char *fname) noexcept
 {
     al::ifstream f{fname};
     if(!f.is_open())
-        return al::make_optional(std::string("Failed to open file \"")+fname+"\"");
+        return std::string("Failed to open file \"")+fname+"\"";
 
     ReaderScope scope{ReaderScope::Global};
     size_t speaker_pos{0};
@@ -139,7 +139,7 @@ al::optional<std::string> AmbDecConf::load(const char *fname) noexcept
                 {
                     --toread;
                     istr >> value;
-                    if(curgain < al::size(gains))
+                    if(curgain < std::size(gains))
                         gains[curgain++] = value;
                 }
             }
@@ -291,7 +291,7 @@ al::optional<std::string> AmbDecConf::load(const char *fname) noexcept
             if(CoeffScale == AmbDecScale::Unset)
                 return make_error(linenum, "No coefficient scaling defined");
 
-            return al::nullopt;
+            return std::nullopt;
         }
         else
             return make_error(linenum, "Unexpected command: %s", command.c_str());

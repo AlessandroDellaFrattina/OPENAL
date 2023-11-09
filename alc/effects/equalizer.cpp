@@ -87,7 +87,7 @@ namespace {
 
 struct EqualizerState final : public EffectState {
     struct {
-        uint mTargetChannel{INVALID_CHANNEL_INDEX};
+        uint mTargetChannel{InvalidChannelIndex};
 
         /* Effect parameters */
         BiquadFilter mFilter[4];
@@ -100,7 +100,7 @@ struct EqualizerState final : public EffectState {
     alignas(16) FloatBufferLine mSampleBuffer{};
 
 
-    void deviceUpdate(const DeviceBase *device, const Buffer &buffer) override;
+    void deviceUpdate(const DeviceBase *device, const BufferStorage *buffer) override;
     void update(const ContextBase *context, const EffectSlot *slot, const EffectProps *props,
         const EffectTarget target) override;
     void process(const size_t samplesToDo, const al::span<const FloatBufferLine> samplesIn,
@@ -109,11 +109,11 @@ struct EqualizerState final : public EffectState {
     DEF_NEWDEL(EqualizerState)
 };
 
-void EqualizerState::deviceUpdate(const DeviceBase*, const Buffer&)
+void EqualizerState::deviceUpdate(const DeviceBase*, const BufferStorage*)
 {
     for(auto &e : mChans)
     {
-        e.mTargetChannel = INVALID_CHANNEL_INDEX;
+        e.mTargetChannel = InvalidChannelIndex;
         std::for_each(std::begin(e.mFilter), std::end(e.mFilter),
             std::mem_fn(&BiquadFilter::clear));
         e.mCurrentGain = 0.0f;
@@ -176,7 +176,7 @@ void EqualizerState::process(const size_t samplesToDo, const al::span<const Floa
     for(const auto &input : samplesIn)
     {
         const size_t outidx{chan->mTargetChannel};
-        if(outidx != INVALID_CHANNEL_INDEX)
+        if(outidx != InvalidChannelIndex)
         {
             const al::span<const float> inbuf{input.data(), samplesToDo};
             DualBiquad{chan->mFilter[0], chan->mFilter[1]}.process(inbuf, buffer.begin());

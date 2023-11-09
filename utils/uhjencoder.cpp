@@ -25,8 +25,8 @@
 #include "config.h"
 
 #include <array>
+#include <cinttypes>
 #include <cstring>
-#include <inttypes.h>
 #include <memory>
 #include <stddef.h>
 #include <string>
@@ -325,7 +325,7 @@ int main(int argc, char **argv)
                     return false;
                 for(const int id : a)
                 {
-                    if(std::find(b.begin(), b.end(), id) != b.end())
+                    if(std::find(b.begin(), b.end(), id) == b.end())
                         return false;
                 }
                 return true;
@@ -349,7 +349,7 @@ int main(int argc, char **argv)
             else
             {
                 std::string mapstr;
-                if(chanmap.size() > 0)
+                if(!chanmap.empty())
                 {
                     mapstr = std::to_string(chanmap[0]);
                     for(int idx : al::span<int>{chanmap}.subspan<1>())
@@ -414,7 +414,7 @@ int main(int argc, char **argv)
 
         auto encoder = std::make_unique<UhjEncoder>();
         auto splbuf = al::vector<FloatBufferLine, 16>(static_cast<uint>(9+ininfo.channels)+uhjchans);
-        auto ambmem = al::span<FloatBufferLine,4>{&splbuf[0], 4};
+        auto ambmem = al::span<FloatBufferLine,4>{splbuf.data(), 4};
         auto encmem = al::span<FloatBufferLine,4>{&splbuf[4], 4};
         auto srcmem = al::span<float,BufferLineSize>{splbuf[8].data(), BufferLineSize};
         auto outmem = al::span<float>{splbuf[9].data(), BufferLineSize*uhjchans};
@@ -502,11 +502,9 @@ int main(int argc, char **argv)
             got -= LeadIn;
             for(size_t c{0};c < uhjchans;++c)
             {
-                constexpr float max_val{8388607.0f / 8388608.0f};
-                auto clamp = [](float v, float mn, float mx) noexcept
-                { return std::min(std::max(v, mn), mx); };
+                static constexpr float max_val{8388607.0f / 8388608.0f};
                 for(size_t i{0};i < got;++i)
-                    outmem[i*uhjchans + c] = clamp(encmem[c][LeadIn+i], -1.0f, max_val);
+                    outmem[i*uhjchans + c] = std::clamp(encmem[c][LeadIn+i], -1.0f, max_val);
             }
             LeadIn = 0;
 

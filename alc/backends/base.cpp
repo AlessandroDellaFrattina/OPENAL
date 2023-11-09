@@ -14,7 +14,6 @@
 
 #include "albit.h"
 #include "core/logging.h"
-#include "aloptional.h"
 #endif
 
 #include "atomic.h"
@@ -38,7 +37,7 @@ backend_exception::~backend_exception() = default;
 bool BackendBase::reset()
 { throw al::backend_exception{al::backend_error::DeviceError, "Invalid BackendBase call"}; }
 
-void BackendBase::captureSamples(al::byte*, uint)
+void BackendBase::captureSamples(std::byte*, uint)
 { }
 
 uint BackendBase::availableSamples()
@@ -68,7 +67,7 @@ ClockLatency BackendBase::getClockLatency()
 
 void BackendBase::setDefaultWFXChannelOrder()
 {
-    mDevice->RealOut.ChannelIndex.fill(INVALID_CHANNEL_INDEX);
+    mDevice->RealOut.ChannelIndex.fill(InvalidChannelIndex);
 
     switch(mDevice->FmtChans)
     {
@@ -143,7 +142,7 @@ void BackendBase::setDefaultWFXChannelOrder()
 
 void BackendBase::setDefaultChannelOrder()
 {
-    mDevice->RealOut.ChannelIndex.fill(INVALID_CHANNEL_INDEX);
+    mDevice->RealOut.ChannelIndex.fill(InvalidChannelIndex);
 
     switch(mDevice->FmtChans)
     {

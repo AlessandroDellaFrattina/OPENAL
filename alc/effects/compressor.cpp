@@ -65,7 +65,7 @@ namespace {
 struct CompressorState final : public EffectState {
     /* Effect gains for each channel */
     struct {
-        uint mTarget{INVALID_CHANNEL_INDEX};
+        uint mTarget{InvalidChannelIndex};
         float mGain{1.0f};
     } mChans[MaxAmbiChannels];
 
@@ -76,7 +76,7 @@ struct CompressorState final : public EffectState {
     float mEnvFollower{1.0f};
 
 
-    void deviceUpdate(const DeviceBase *device, const Buffer &buffer) override;
+    void deviceUpdate(const DeviceBase *device, const BufferStorage *buffer) override;
     void update(const ContextBase *context, const EffectSlot *slot, const EffectProps *props,
         const EffectTarget target) override;
     void process(const size_t samplesToDo, const al::span<const FloatBufferLine> samplesIn,
@@ -85,7 +85,7 @@ struct CompressorState final : public EffectState {
     DEF_NEWDEL(CompressorState)
 };
 
-void CompressorState::deviceUpdate(const DeviceBase *device, const Buffer&)
+void CompressorState::deviceUpdate(const DeviceBase *device, const BufferStorage*)
 {
     /* Number of samples to do a full attack and release (non-integer sample
      * counts are okay).
@@ -168,7 +168,7 @@ void CompressorState::process(const size_t samplesToDo,
         for(const auto &input : samplesIn)
         {
             const size_t outidx{chan->mTarget};
-            if(outidx != INVALID_CHANNEL_INDEX)
+            if(outidx != InvalidChannelIndex)
             {
                 const float *RESTRICT src{input.data() + base};
                 float *RESTRICT dst{samplesOut[outidx].data() + base};

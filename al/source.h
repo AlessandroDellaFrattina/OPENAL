@@ -4,9 +4,10 @@
 #include <array>
 #include <atomic>
 #include <cstddef>
+#include <deque>
 #include <iterator>
 #include <limits>
-#include <deque>
+#include <string_view>
 
 #include "AL/al.h"
 #include "AL/alc.h"
@@ -14,7 +15,6 @@
 #include "alc/alu.h"
 #include "alc/context.h"
 #include "alc/inprogext.h"
-#include "aldeque.h"
 #include "almalloc.h"
 #include "alnumeric.h"
 #include "atomic.h"
@@ -40,6 +40,8 @@ enum class SourceStereo : bool {
 #define DEFAULT_SENDS  2
 
 #define INVALID_VOICE_IDX static_cast<ALuint>(-1)
+
+extern bool sBufferSubDataCompat;
 
 struct ALbufferQueueItem : public VoiceBufferItem {
     ALbuffer *mBuffer{nullptr};
@@ -136,7 +138,7 @@ struct ALsource {
     ALenum state{AL_INITIAL};
 
     /** Source Buffer Queue head. */
-    al::deque<ALbufferQueueItem> mQueue;
+    std::deque<ALbufferQueueItem> mQueue;
 
     bool mPropsDirty{true};
 
@@ -155,26 +157,21 @@ struct ALsource {
     ALsource(const ALsource&) = delete;
     ALsource& operator=(const ALsource&) = delete;
 
+    static void SetName(ALCcontext *context, ALuint id, std::string_view name);
+
     DISABLE_ALLOC()
 
 #ifdef ALSOFT_EAX
 public:
-    void eax_initialize(ALCcontext *context) noexcept;
-    void eax_dispatch(const EaxCall& call);
-    void eax_commit() { eax_commit(EaxCommitType::normal); }
-    void eax_commit_and_update();
-    void eax_mark_as_changed() { eax_changed_ = true; }
-    bool eax_is_initialized() const noexcept { return eax_al_context_ != nullptr; }
+    void eaxInitialize(ALCcontext *context) noexcept;
+    void eaxDispatch(const EaxCall& call);
+    void eaxCommit();
+    void eaxMarkAsChanged() noexcept { mEaxChanged = true; }
 
-    static ALsource* eax_lookup_source(ALCcontext& al_context, ALuint source_id) noexcept;
+    static ALsource* EaxLookupSource(ALCcontext& al_context, ALuint source_id) noexcept;
 
 private:
     using Exception = EaxSourceException;
-
-    enum class EaxCommitType {
-        normal,
-        forced,
-    };
 
     static constexpr auto eax_max_speakers = 9;
 
@@ -199,21 +196,18 @@ private:
     using EaxSends = std::array<EAXSOURCEALLSENDPROPERTIES, EAX_MAX_FXSLOTS>;
 
     using Eax1Props = EAXBUFFER_REVERBPROPERTIES;
-
     struct Eax1State {
         Eax1Props i; // Immediate.
         Eax1Props d; // Deferred.
     };
 
     using Eax2Props = EAX20BUFFERPROPERTIES;
-
     struct Eax2State {
         Eax2Props i; // Immediate.
         Eax2Props d; // Deferred.
     };
 
     using Eax3Props = EAX30SOURCEPROPERTIES;
-
     struct Eax3State {
         Eax3Props i; // Immediate.
         Eax3Props d; // Deferred.
@@ -252,17 +246,17 @@ private:
         Eax5Props d; // Deferred.
     };
 
-    ALCcontext* eax_al_context_{};
-    EaxFxSlotIndex eax_primary_fx_slot_id_{};
-    EaxActiveFxSlots eax_active_fx_slots_{};
-    int eax_version_{};
-    bool eax_changed_{};
-    Eax1State eax1_{};
-    Eax2State eax2_{};
-    Eax3State eax3_{};
-    Eax4State eax4_{};
-    Eax5State eax5_{};
-    Eax5Props eax_{};
+    ALCcontext* mEaxAlContext{};
+    EaxFxSlotIndex mEaxPrimaryFxSlotId{};
+    EaxActiveFxSlots mEaxActiveFxSlots{};
+    int mEaxVersion{};
+    bool mEaxChanged{};
+    Eax1State mEax1{};
+    Eax2State mEax2{};
+    Eax3State mEax3{};
+    Eax4State mEax4{};
+    Eax5State mEax5{};
+    Eax5Props mEax{};
 
     // ----------------------------------------------------------------------
     // Source validators
@@ -1044,7 +1038,6 @@ private:
         const EaxAlLowPassParam &filter);
 
     void eax_commit_active_fx_slots();
-    void eax_commit(EaxCommitType commit_type);
 #endif // ALSOFT_EAX
 };
 

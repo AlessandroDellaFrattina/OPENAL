@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 
 #include "alnumbers.h"
 #include "opthelpers.h"
@@ -21,7 +22,7 @@ using uint = unsigned int;
  */
 double Sinc(const double x)
 {
-    if(std::abs(x) < Epsilon) [[unlikely]]
+    if(std::abs(x) < Epsilon) UNLIKELY
         return 1.0;
     return std::sin(al::numbers::pi*x) / (al::numbers::pi*x);
 }
@@ -67,23 +68,11 @@ constexpr double BesselI_0(const double x)
  *
  *   k = 2 i / M - 1,   where 0 <= i <= M.
  */
-double Kaiser(const double b, const double k)
+double Kaiser(const double beta, const double k, const double besseli_0_beta)
 {
     if(!(k >= -1.0 && k <= 1.0))
         return 0.0;
-    return BesselI_0(b * std::sqrt(1.0 - k*k)) / BesselI_0(b);
-}
-
-// Calculates the greatest common divisor of a and b.
-constexpr uint Gcd(uint x, uint y)
-{
-    while(y > 0)
-    {
-        const uint z{y};
-        y = x % y;
-        x = z;
-    }
-    return x;
+    return BesselI_0(beta * std::sqrt(1.0 - k*k)) / besseli_0_beta;
 }
 
 /* Calculates the size (order) of the Kaiser window.  Rejection is in dB and
@@ -96,7 +85,7 @@ constexpr uint Gcd(uint x, uint y)
 constexpr uint CalcKaiserOrder(const double rejection, const double transition)
 {
     const double w_t{2.0 * al::numbers::pi * transition};
-    if(rejection > 21.0) [[likely]]
+    if(rejection > 21.0) LIKELY
         return static_cast<uint>(std::ceil((rejection - 7.95) / (2.285 * w_t)));
     return static_cast<uint>(std::ceil(5.79 / w_t));
 }
@@ -104,7 +93,7 @@ constexpr uint CalcKaiserOrder(const double rejection, const double transition)
 // Calculates the beta value of the Kaiser window.  Rejection is in dB.
 constexpr double CalcKaiserBeta(const double rejection)
 {
-    if(rejection > 50.0) [[likely]]
+    if(rejection > 50.0) LIKELY
         return 0.1102 * (rejection - 8.7);
     if(rejection >= 21.0)
         return (0.5842 * std::pow(rejection - 21.0, 0.4)) +
@@ -124,11 +113,11 @@ constexpr double CalcKaiserBeta(const double rejection)
  *   p    -- gain compensation factor when sampling
  *   f_t  -- normalized center frequency (or cutoff; 0.5 is nyquist)
  */
-double SincFilter(const uint l, const double b, const double gain, const double cutoff,
-    const uint i)
+double SincFilter(const uint l, const double beta, const double besseli_0_beta, const double gain,
+    const double cutoff, const uint i)
 {
     const double x{static_cast<double>(i) - l};
-    return Kaiser(b, x / l) * 2.0 * gain * cutoff * Sinc(2.0 * cutoff * x);
+    return Kaiser(beta, x/l, besseli_0_beta) * 2.0 * gain * cutoff * Sinc(2.0 * cutoff * x);
 }
 
 } // namespace
@@ -137,7 +126,7 @@ double SincFilter(const uint l, const double b, const double gain, const double 
 // that's used to cut frequencies above the destination nyquist.
 void PPhaseResampler::init(const uint srcRate, const uint dstRate)
 {
-    const uint gcd{Gcd(srcRate, dstRate)};
+    const uint gcd{std::gcd(srcRate, dstRate)};
     mP = dstRate / gcd;
     mQ = srcRate / gcd;
 
@@ -160,24 +149,25 @@ void PPhaseResampler::init(const uint srcRate, const uint dstRate)
     // calculating the left offset to avoid increasing the transition width.
     const uint l{(CalcKaiserOrder(180.0, width)+1) / 2};
     const double beta{CalcKaiserBeta(180.0)};
+    const double besseli_0_beta{BesselI_0(beta)};
     mM = l*2 + 1;
     mL = l;
     mF.resize(mM);
     for(uint i{0};i < mM;i++)
-        mF[i] = SincFilter(l, beta, mP, cutoff, i);
+        mF[i] = SincFilter(l, beta, besseli_0_beta, mP, cutoff, i);
 }
 
 // Perform the upsample-filter-downsample resampling operation using a
 // polyphase filter implementation.
 void PPhaseResampler::process(const uint inN, const double *in, const uint outN, double *out)
 {
-    if(outN == 0) [[unlikely]]
+    if(outN == 0) UNLIKELY
         return;
 
     // Handle in-place operation.
     std::vector<double> workspace;
     double *work{out};
-    if(work == in) [[unlikely]]
+    if(work == in) UNLIKELY
     {
         workspace.resize(outN);
         work = workspace.data();
@@ -195,17 +185,17 @@ void PPhaseResampler::process(const uint inN, const double *in, const uint outN,
 
         // Only take input when 0 <= j_s < inN.
         double r{0.0};
-        if(j_f < m) [[likely]]
+        if(j_f < m) LIKELY
         {
             size_t filt_len{(m-j_f+p-1) / p};
-            if(j_s+1 > inN) [[likely]]
+            if(j_s+1 > inN) LIKELY
             {
                 size_t skip{std::min<size_t>(j_s+1 - inN, filt_len)};
                 j_f += p*skip;
                 j_s -= skip;
                 filt_len -= skip;
             }
-            if(size_t todo{std::min<size_t>(j_s+1, filt_len)}) [[likely]]
+            if(size_t todo{std::min<size_t>(j_s+1, filt_len)}) LIKELY
             {
                 do {
                     r += f[j_f] * in[j_s];

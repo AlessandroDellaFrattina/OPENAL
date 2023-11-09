@@ -65,7 +65,7 @@ struct AutowahState final : public EffectState {
     } mEnv[BufferLineSize];
 
     struct {
-        uint mTargetChannel{INVALID_CHANNEL_INDEX};
+        uint mTargetChannel{InvalidChannelIndex};
 
         /* Effect filters' history. */
         struct {
@@ -81,7 +81,7 @@ struct AutowahState final : public EffectState {
     alignas(16) float mBufferOut[BufferLineSize];
 
 
-    void deviceUpdate(const DeviceBase *device, const Buffer &buffer) override;
+    void deviceUpdate(const DeviceBase *device, const BufferStorage *buffer) override;
     void update(const ContextBase *context, const EffectSlot *slot, const EffectProps *props,
         const EffectTarget target) override;
     void process(const size_t samplesToDo, const al::span<const FloatBufferLine> samplesIn,
@@ -90,7 +90,7 @@ struct AutowahState final : public EffectState {
     DEF_NEWDEL(AutowahState)
 };
 
-void AutowahState::deviceUpdate(const DeviceBase*, const Buffer&)
+void AutowahState::deviceUpdate(const DeviceBase*, const BufferStorage*)
 {
     /* (Re-)initializing parameters and clear the buffers. */
 
@@ -110,7 +110,7 @@ void AutowahState::deviceUpdate(const DeviceBase*, const Buffer&)
 
     for(auto &chan : mChans)
     {
-        chan.mTargetChannel = INVALID_CHANNEL_INDEX;
+        chan.mTargetChannel = InvalidChannelIndex;
         chan.mFilter.z1 = 0.0f;
         chan.mFilter.z2 = 0.0f;
         chan.mCurrentGain = 0.0f;
@@ -175,7 +175,7 @@ void AutowahState::process(const size_t samplesToDo,
     for(const auto &insamples : samplesIn)
     {
         const size_t outidx{chandata->mTargetChannel};
-        if(outidx == INVALID_CHANNEL_INDEX)
+        if(outidx == InvalidChannelIndex)
         {
             ++chandata;
             continue;

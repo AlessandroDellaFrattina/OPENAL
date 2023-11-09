@@ -7,10 +7,12 @@
 #include <cmath>
 #include <limits>
 #include <memory>
-#include <stdexcept>
+#include <stddef.h>
 
 #include "alnumbers.h"
-#include "core/mixer/defs.h"
+#include "alnumeric.h"
+#include "bsinc_defs.h"
+#include "resampler_limits.h"
 
 
 namespace {
@@ -107,7 +109,6 @@ struct BSincHeader {
     double width{};
     double beta{};
     double scaleBase{};
-    double scaleRange{};
     double besseli_0_beta{};
 
     uint a[BSincScaleCount]{};
@@ -118,13 +119,12 @@ struct BSincHeader {
         width = CalcKaiserWidth(Rejection, Order);
         beta = CalcKaiserBeta(Rejection);
         scaleBase = width / 2.0;
-        scaleRange = 1.0 - scaleBase;
         besseli_0_beta = BesselI_0(beta);
 
         uint num_points{Order+1};
         for(uint si{0};si < BSincScaleCount;++si)
         {
-            const double scale{scaleBase + (scaleRange * (si+1) / BSincScaleCount)};
+            const double scale{lerpd(scaleBase, 1.0, (si+1) / double{BSincScaleCount})};
             const uint a_{std::min(static_cast<uint>(num_points / 2.0 / scale), num_points)};
             const uint m{2 * a_};
 
@@ -142,26 +142,6 @@ constexpr BSincHeader bsinc12_hdr{60, 11};
 constexpr BSincHeader bsinc24_hdr{60, 23};
 
 
-/* NOTE: GCC 5 has an issue with BSincHeader objects being in an anonymous
- * namespace while also being used as non-type template parameters.
- */
-#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ < 6
-
-/* The number of sample points is double the a value (rounded up to a multiple
- * of 4), and scale index 0 includes the doubling for downsampling. bsinc24 is
- * currently the highest quality filter, and will use the most sample points.
- */
-constexpr uint BSincPointsMax{(bsinc24_hdr.a[0]*2 + 3) & ~3u};
-static_assert(BSincPointsMax <= MaxResamplerPadding, "MaxResamplerPadding is too small");
-
-template<size_t total_size>
-struct BSincFilterArray {
-    alignas(16) std::array<float, total_size> mTable;
-    const BSincHeader &hdr;
-
-    BSincFilterArray(const BSincHeader &hdr_) : hdr{hdr_}
-    {
-#else
 template<const BSincHeader &hdr>
 struct BSincFilterArray {
     alignas(16) std::array<float, hdr.total_size> mTable{};
@@ -170,7 +150,7 @@ struct BSincFilterArray {
     {
         constexpr uint BSincPointsMax{(hdr.a[0]*2 + 3) & ~3u};
         static_assert(BSincPointsMax <= MaxResamplerPadding, "MaxResamplerPadding is too small");
-#endif
+
         using filter_type = double[BSincPhaseCount+1][BSincPointsMax];
         auto filter = std::make_unique<filter_type[]>(BSincScaleCount);
 
@@ -181,7 +161,7 @@ struct BSincFilterArray {
         {
             const uint m{hdr.a[si] * 2};
             const size_t o{(BSincPointsMax-m) / 2};
-            const double scale{hdr.scaleBase + (hdr.scaleRange * (si+1) / BSincScaleCount)};
+            const double scale{lerpd(hdr.scaleBase, 1.0, (si+1) / double{BSincScaleCount})};
             const double cutoff{scale - (hdr.scaleBase * std::max(1.0, scale*2.0))};
             const auto a = static_cast<double>(hdr.a[si]);
             const double l{a - 1.0/BSincPhaseCount};
@@ -265,13 +245,8 @@ struct BSincFilterArray {
     constexpr const float *getTable() const noexcept { return &mTable.front(); }
 };
 
-#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ < 6
-const BSincFilterArray<bsinc12_hdr.total_size> bsinc12_filter{bsinc12_hdr};
-const BSincFilterArray<bsinc24_hdr.total_size> bsinc24_filter{bsinc24_hdr};
-#else
 const BSincFilterArray<bsinc12_hdr> bsinc12_filter{};
 const BSincFilterArray<bsinc24_hdr> bsinc24_filter{};
-#endif
 
 template<typename T>
 constexpr BSincTable GenerateBSincTable(const T &filter)
@@ -279,7 +254,7 @@ constexpr BSincTable GenerateBSincTable(const T &filter)
     BSincTable ret{};
     const BSincHeader &hdr = filter.getHeader();
     ret.scaleBase = static_cast<float>(hdr.scaleBase);
-    ret.scaleRange = static_cast<float>(1.0 / hdr.scaleRange);
+    ret.scaleRange = static_cast<float>(1.0 / (1.0 - hdr.scaleBase));
     for(size_t i{0};i < BSincScaleCount;++i)
         ret.m[i] = ((hdr.a[i]*2) + 3) & ~3u;
     ret.filterOffset[0] = 0;
@@ -291,5 +266,5 @@ constexpr BSincTable GenerateBSincTable(const T &filter)
 
 } // namespace
 
-const BSincTable bsinc12{GenerateBSincTable(bsinc12_filter)};
-const BSincTable bsinc24{GenerateBSincTable(bsinc24_filter)};
+const BSincTable gBSinc12{GenerateBSincTable(bsinc12_filter)};
+const BSincTable gBSinc24{GenerateBSincTable(bsinc24_filter)};

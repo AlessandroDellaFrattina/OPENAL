@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <string_view>
 
 #include "AL/al.h"
 #include "AL/alc.h"
@@ -45,6 +46,7 @@ enum class SlotState : ALenum {
 };
 
 struct ALeffectslot {
+    ALuint EffectId{};
     float Gain{1.0f};
     bool  AuxSendAuto{true};
     ALeffectslot *Target{nullptr};
@@ -73,8 +75,11 @@ struct ALeffectslot {
     ALeffectslot& operator=(const ALeffectslot&) = delete;
     ~ALeffectslot();
 
-    ALenum initEffect(ALenum effectType, const EffectProps &effectProps, ALCcontext *context);
+    ALenum initEffect(ALuint effectId, ALenum effectType, const EffectProps &effectProps,
+        ALCcontext *context);
     void updateProps(ALCcontext *context);
+
+    static void SetName(ALCcontext *context, ALuint id, std::string_view name);
 
     /* This can be new'd for the context's default effect slot. */
     DEF_NEWDEL(ALeffectslot)
@@ -299,7 +304,7 @@ private:
     // Returns `true` if all sources should be updated, or `false` otherwise.
     bool eax_get(const EaxCall& call);
 
-    void eax_fx_slot_load_effect();
+    void eax_fx_slot_load_effect(int version, ALenum altype);
     void eax_fx_slot_set_volume();
     void eax_fx_slot_set_environment_flag();
     void eax_fx_slot_set_flags();
@@ -338,8 +343,6 @@ private:
 
     void eax4_fx_slot_commit(EaxDirtyFlags& dst_df);
     void eax5_fx_slot_commit(Eax5State& state, EaxDirtyFlags& dst_df);
-
-    void eax_dispatch_effect(const EaxCall& call);
 
     // `alAuxiliaryEffectSloti(effect_slot, AL_EFFECTSLOT_EFFECT, effect)`
     void eax_set_efx_slot_effect(EaxEffect &effect);

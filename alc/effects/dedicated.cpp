@@ -51,7 +51,7 @@ struct DedicatedState final : public EffectState {
     float mTargetGains[MAX_OUTPUT_CHANNELS];
 
 
-    void deviceUpdate(const DeviceBase *device, const Buffer &buffer) override;
+    void deviceUpdate(const DeviceBase *device, const BufferStorage *buffer) override;
     void update(const ContextBase *context, const EffectSlot *slot, const EffectProps *props,
         const EffectTarget target) override;
     void process(const size_t samplesToDo, const al::span<const FloatBufferLine> samplesIn,
@@ -60,7 +60,7 @@ struct DedicatedState final : public EffectState {
     DEF_NEWDEL(DedicatedState)
 };
 
-void DedicatedState::deviceUpdate(const DeviceBase*, const Buffer&)
+void DedicatedState::deviceUpdate(const DeviceBase*, const BufferStorage*)
 {
     std::fill(std::begin(mCurrentGains), std::end(mCurrentGains), 0.0f);
 }
@@ -74,8 +74,8 @@ void DedicatedState::update(const ContextBase*, const EffectSlot *slot,
 
     if(slot->EffectType == EffectSlotType::DedicatedLFE)
     {
-        const uint idx{target.RealOut ? target.RealOut->ChannelIndex[LFE] : INVALID_CHANNEL_INDEX};
-        if(idx != INVALID_CHANNEL_INDEX)
+        const size_t idx{target.RealOut ? target.RealOut->ChannelIndex[LFE] : InvalidChannelIndex};
+        if(idx != InvalidChannelIndex)
         {
             mOutTarget = target.RealOut->Buffer;
             mTargetGains[idx] = Gain;
@@ -85,19 +85,19 @@ void DedicatedState::update(const ContextBase*, const EffectSlot *slot,
     {
         /* Dialog goes to the front-center speaker if it exists, otherwise it
          * plays from the front-center location. */
-        const uint idx{target.RealOut ? target.RealOut->ChannelIndex[FrontCenter]
-            : INVALID_CHANNEL_INDEX};
-        if(idx != INVALID_CHANNEL_INDEX)
+        const size_t idx{target.RealOut ? target.RealOut->ChannelIndex[FrontCenter]
+            : InvalidChannelIndex};
+        if(idx != InvalidChannelIndex)
         {
             mOutTarget = target.RealOut->Buffer;
             mTargetGains[idx] = Gain;
         }
         else
         {
-            static constexpr auto coeffs = CalcDirectionCoeffs({0.0f, 0.0f, -1.0f});
+            static constexpr auto coeffs = CalcDirectionCoeffs(std::array{0.0f, 0.0f, -1.0f});
 
             mOutTarget = target.Main->Buffer;
-            ComputePanGains(target.Main, coeffs.data(), Gain, mTargetGains);
+            ComputePanGains(target.Main, coeffs, Gain, mTargetGains);
         }
     }
 }

@@ -1,9 +1,9 @@
 #ifndef CORE_EFFECTS_BASE_H
 #define CORE_EFFECTS_BASE_H
 
+#include <array>
 #include <stddef.h>
 
-#include "albyte.h"
 #include "almalloc.h"
 #include "alspan.h"
 #include "atomic.h"
@@ -61,32 +61,29 @@ enum class VMorpherWaveform {
 
 union EffectProps {
     struct {
-        // Shared Reverb Properties
         float Density;
         float Diffusion;
         float Gain;
         float GainHF;
+        float GainLF;
         float DecayTime;
         float DecayHFRatio;
+        float DecayLFRatio;
         float ReflectionsGain;
         float ReflectionsDelay;
+        float ReflectionsPan[3];
         float LateReverbGain;
         float LateReverbDelay;
-        float AirAbsorptionGainHF;
-        float RoomRolloffFactor;
-        bool DecayHFLimit;
-
-        // Additional EAX Reverb Properties
-        float GainLF;
-        float DecayLFRatio;
-        float ReflectionsPan[3];
         float LateReverbPan[3];
         float EchoTime;
         float EchoDepth;
         float ModulationTime;
         float ModulationDepth;
+        float AirAbsorptionGainHF;
         float HFReference;
         float LFReference;
+        float RoomRolloffFactor;
+        bool DecayHFLimit;
     } Reverb;
 
     struct {
@@ -169,6 +166,11 @@ union EffectProps {
     struct {
         float Gain;
     } Dedicated;
+
+    struct {
+        std::array<float,3> OrientAt;
+        std::array<float,3> OrientUp;
+    } Convolution;
 };
 
 
@@ -178,17 +180,12 @@ struct EffectTarget {
 };
 
 struct EffectState : public al::intrusive_ref<EffectState> {
-    struct Buffer {
-        const BufferStorage *storage;
-        al::span<const al::byte> samples;
-    };
-
     al::span<FloatBufferLine> mOutTarget;
 
 
     virtual ~EffectState() = default;
 
-    virtual void deviceUpdate(const DeviceBase *device, const Buffer &buffer) = 0;
+    virtual void deviceUpdate(const DeviceBase *device, const BufferStorage *buffer) = 0;
     virtual void update(const ContextBase *context, const EffectSlot *slot,
         const EffectProps *props, const EffectTarget target) = 0;
     virtual void process(const size_t samplesToDo, const al::span<const FloatBufferLine> samplesIn,

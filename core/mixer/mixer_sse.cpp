@@ -7,10 +7,12 @@
 
 #include "alnumeric.h"
 #include "core/bsinc_defs.h"
+#include "core/cubic_defs.h"
 #include "defs.h"
 #include "hrtfbase.h"
 
 struct SSETag;
+struct CubicTag;
 struct BSincTag;
 struct FastBSincTag;
 
@@ -21,8 +23,13 @@ struct FastBSincTag;
 
 namespace {
 
-constexpr uint FracPhaseBitDiff{MixerFracBits - BSincPhaseBits};
-constexpr uint FracPhaseDiffOne{1 << FracPhaseBitDiff};
+constexpr uint BSincPhaseDiffBits{MixerFracBits - BSincPhaseBits};
+constexpr uint BSincPhaseDiffOne{1 << BSincPhaseDiffBits};
+constexpr uint BSincPhaseDiffMask{BSincPhaseDiffOne - 1u};
+
+constexpr uint CubicPhaseDiffBits{MixerFracBits - CubicPhaseBits};
+constexpr uint CubicPhaseDiffOne{1 << CubicPhaseDiffBits};
+constexpr uint CubicPhaseDiffMask{CubicPhaseDiffOne - 1u};
 
 #define MLA4(x, y, z) _mm_add_ps(x, _mm_mul_ps(y, z))
 
@@ -40,42 +47,42 @@ inline void ApplyCoeffs(float2 *RESTRICT Values, const size_t IrSize, const Cons
     {
         for(size_t i{0};i < IrSize;i += 2)
         {
-            const __m128 coeffs{_mm_load_ps(&Coeffs[i][0])};
-            __m128 vals{_mm_load_ps(&Values[i][0])};
+            const __m128 coeffs{_mm_load_ps(Coeffs[i].data())};
+            __m128 vals{_mm_load_ps(Values[i].data())};
             vals = MLA4(vals, lrlr, coeffs);
-            _mm_store_ps(&Values[i][0], vals);
+            _mm_store_ps(Values[i].data(), vals);
         }
     }
     else
     {
         __m128 imp0, imp1;
-        __m128 coeffs{_mm_load_ps(&Coeffs[0][0])};
-        __m128 vals{_mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<__m64*>(&Values[0][0]))};
+        __m128 coeffs{_mm_load_ps(Coeffs[0].data())};
+        __m128 vals{_mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<__m64*>(Values[0].data()))};
         imp0 = _mm_mul_ps(lrlr, coeffs);
         vals = _mm_add_ps(imp0, vals);
-        _mm_storel_pi(reinterpret_cast<__m64*>(&Values[0][0]), vals);
+        _mm_storel_pi(reinterpret_cast<__m64*>(Values[0].data()), vals);
         size_t td{((IrSize+1)>>1) - 1};
         size_t i{1};
         do {
-            coeffs = _mm_load_ps(&Coeffs[i+1][0]);
-            vals = _mm_load_ps(&Values[i][0]);
+            coeffs = _mm_load_ps(Coeffs[i+1].data());
+            vals = _mm_load_ps(Values[i].data());
             imp1 = _mm_mul_ps(lrlr, coeffs);
             imp0 = _mm_shuffle_ps(imp0, imp1, _MM_SHUFFLE(1, 0, 3, 2));
             vals = _mm_add_ps(imp0, vals);
-            _mm_store_ps(&Values[i][0], vals);
+            _mm_store_ps(Values[i].data(), vals);
             imp0 = imp1;
             i += 2;
         } while(--td);
-        vals = _mm_loadl_pi(vals, reinterpret_cast<__m64*>(&Values[i][0]));
+        vals = _mm_loadl_pi(vals, reinterpret_cast<__m64*>(Values[i].data()));
         imp0 = _mm_movehl_ps(imp0, imp0);
         vals = _mm_add_ps(imp0, vals);
-        _mm_storel_pi(reinterpret_cast<__m64*>(&Values[i][0]), vals);
+        _mm_storel_pi(reinterpret_cast<__m64*>(Values[i].data()), vals);
     }
 }
 
-inline void MixLine(const al::span<const float> InSamples, float *RESTRICT dst, float &CurrentGain,
-    const float TargetGain, const float delta, const size_t min_len, const size_t aligned_len,
-    size_t Counter)
+force_inline void MixLine(const al::span<const float> InSamples, float *RESTRICT dst,
+    float &CurrentGain, const float TargetGain, const float delta, const size_t min_len,
+    const size_t aligned_len, size_t Counter)
 {
     float gain{CurrentGain};
     const float step{(TargetGain-gain) * delta};
@@ -147,20 +154,54 @@ inline void MixLine(const al::span<const float> InSamples, float *RESTRICT dst, 
 } // namespace
 
 template<>
-float *Resample_<BSincTag,SSETag>(const InterpState *state, float *RESTRICT src, uint frac,
-    uint increment, const al::span<float> dst)
+void Resample_<CubicTag,SSETag>(const InterpState *state, const float *RESTRICT src, uint frac,
+    const uint increment, const al::span<float> dst)
+{
+    ASSUME(frac < MixerFracOne);
+
+    const CubicCoefficients *RESTRICT filter = al::assume_aligned<16>(state->cubic.filter);
+
+    src -= 1;
+    for(float &out_sample : dst)
+    {
+        const uint pi{frac >> CubicPhaseDiffBits};
+        const float pf{static_cast<float>(frac&CubicPhaseDiffMask) * (1.0f/CubicPhaseDiffOne)};
+        const __m128 pf4{_mm_set1_ps(pf)};
+
+        /* Apply the phase interpolated filter. */
+
+        /* f = fil + pf*phd */
+        const __m128 f4 = MLA4(_mm_load_ps(filter[pi].mCoeffs), pf4,
+            _mm_load_ps(filter[pi].mDeltas));
+        /* r = f*src */
+        __m128 r4{_mm_mul_ps(f4, _mm_loadu_ps(src))};
+
+        r4 = _mm_add_ps(r4, _mm_shuffle_ps(r4, r4, _MM_SHUFFLE(0, 1, 2, 3)));
+        r4 = _mm_add_ps(r4, _mm_movehl_ps(r4, r4));
+        out_sample = _mm_cvtss_f32(r4);
+
+        frac += increment;
+        src  += frac>>MixerFracBits;
+        frac &= MixerFracMask;
+    }
+}
+
+template<>
+void Resample_<BSincTag,SSETag>(const InterpState *state, const float *RESTRICT src, uint frac,
+    const uint increment, const al::span<float> dst)
 {
     const float *const filter{state->bsinc.filter};
     const __m128 sf4{_mm_set1_ps(state->bsinc.sf)};
     const size_t m{state->bsinc.m};
     ASSUME(m > 0);
+    ASSUME(frac < MixerFracOne);
 
     src -= state->bsinc.l;
     for(float &out_sample : dst)
     {
         // Calculate the phase index and factor.
-        const uint pi{frac >> FracPhaseBitDiff};
-        const float pf{static_cast<float>(frac & (FracPhaseDiffOne-1)) * (1.0f/FracPhaseDiffOne)};
+        const uint pi{frac >> BSincPhaseDiffBits};
+        const float pf{static_cast<float>(frac&BSincPhaseDiffMask) * (1.0f/BSincPhaseDiffOne)};
 
         // Apply the scale and phase interpolated filter.
         __m128 r4{_mm_setzero_ps()};
@@ -191,23 +232,23 @@ float *Resample_<BSincTag,SSETag>(const InterpState *state, float *RESTRICT src,
         src  += frac>>MixerFracBits;
         frac &= MixerFracMask;
     }
-    return dst.data();
 }
 
 template<>
-float *Resample_<FastBSincTag,SSETag>(const InterpState *state, float *RESTRICT src, uint frac,
-    uint increment, const al::span<float> dst)
+void Resample_<FastBSincTag,SSETag>(const InterpState *state, const float *RESTRICT src, uint frac,
+    const uint increment, const al::span<float> dst)
 {
     const float *const filter{state->bsinc.filter};
     const size_t m{state->bsinc.m};
     ASSUME(m > 0);
+    ASSUME(frac < MixerFracOne);
 
     src -= state->bsinc.l;
     for(float &out_sample : dst)
     {
         // Calculate the phase index and factor.
-        const uint pi{frac >> FracPhaseBitDiff};
-        const float pf{static_cast<float>(frac & (FracPhaseDiffOne-1)) * (1.0f/FracPhaseDiffOne)};
+        const uint pi{frac >> BSincPhaseDiffBits};
+        const float pf{static_cast<float>(frac&BSincPhaseDiffMask) * (1.0f/BSincPhaseDiffOne)};
 
         // Apply the phase interpolated filter.
         __m128 r4{_mm_setzero_ps()};
@@ -234,7 +275,6 @@ float *Resample_<FastBSincTag,SSETag>(const InterpState *state, float *RESTRICT 
         src  += frac>>MixerFracBits;
         frac &= MixerFracMask;
     }
-    return dst.data();
 }
 
 
@@ -267,7 +307,7 @@ void Mix_<SSETag>(const al::span<const float> InSamples, const al::span<FloatBuf
 {
     const float delta{(Counter > 0) ? 1.0f / static_cast<float>(Counter) : 0.0f};
     const auto min_len = minz(Counter, InSamples.size());
-    const auto aligned_len = minz((min_len+3) & ~size_t{3}, InSamples.size()) - min_len;
+    const auto aligned_len = minz((min_len+3) & ~3_uz, InSamples.size()) - min_len;
 
     for(FloatBufferLine &output : OutBuffer)
         MixLine(InSamples, al::assume_aligned<16>(output.data()+OutPos), *CurrentGains++,
@@ -280,7 +320,7 @@ void Mix_<SSETag>(const al::span<const float> InSamples, float *OutBuffer, float
 {
     const float delta{(Counter > 0) ? 1.0f / static_cast<float>(Counter) : 0.0f};
     const auto min_len = minz(Counter, InSamples.size());
-    const auto aligned_len = minz((min_len+3) & ~size_t{3}, InSamples.size()) - min_len;
+    const auto aligned_len = minz((min_len+3) & ~3_uz, InSamples.size()) - min_len;
 
     MixLine(InSamples, al::assume_aligned<16>(OutBuffer), CurrentGain, TargetGain, delta, min_len,
         aligned_len, Counter);
