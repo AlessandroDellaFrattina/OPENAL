@@ -1,3 +1,6 @@
+
+#define FORCE_ALIGN
+
 //WINDOWS
 #if defined(VULTURE_PLATFORM_WINDOWS)
 

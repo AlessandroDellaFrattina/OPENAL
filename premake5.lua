@@ -1,8 +1,8 @@
 project "OPENAL"
 	kind "StaticLib"
 	language "C++"
-	cppdialect "C++14"
-	staticruntime "Off"
+	cppdialect "C++17"
+	staticruntime "On"
 	targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
@@ -23,12 +23,14 @@ project "OPENAL"
 		"common/alcomplex.cpp",
 		"common/alfstream.cpp",
 		"common/almalloc.cpp",
+		"common/alsem.cpp",
 		"common/alstring.cpp",
+		"common/althrd_setname.cpp",
 		"common/dynload.cpp",
 		"common/polyphase_resampler.cpp",
 		"common/ringbuffer.cpp",
 		"common/strutils.cpp",
-		"common/threads.cpp",
+		"common/pffft.cpp",
 		"alc/alc.cpp",
 		"alc/alconfig.cpp",
 		"alc/alu.cpp",
@@ -43,6 +45,7 @@ project "OPENAL"
 		"core/bs2b.cpp",
 		"core/bsinc_tables.cpp",
 		"al/buffer.cpp",
+		"al/debug.cpp",
 		"core/buffer_storage.cpp",
 		"alc/effects/chorus.cpp",
 		"al/effects/chorus.cpp",
@@ -56,9 +59,11 @@ project "OPENAL"
 		"core/cpu_caps.cpp",
 		"alc/effects/dedicated.cpp",
 		"al/effects/dedicated.cpp",
+		"core/cubic_tables.cpp",
 		"core/devformat.cpp",
 		"core/device.cpp",
 		"alc/device.cpp",
+		"alc/events.cpp",
 		"alc/effects/distortion.cpp",
 		"al/effects/distortion.cpp",
 		"alc/effects/echo.cpp",
@@ -111,16 +116,6 @@ project "OPENAL"
 		"alc/backends/wave.cpp"
 	}
 
-	disablewarnings {
-
-		"4065",
-		"4127",
-		"4268",
-		"4324",
-		"5030",
-		"5051"
-	}
-
 	filter "system:windows"
 
 		systemversion "latest"
@@ -143,6 +138,17 @@ project "OPENAL"
 			"OpenAL_EXPORTS"
 		}
 
+		disablewarnings {
+
+			"4018",
+			"4065",
+			"4127",
+			"4268",
+			"4324",
+			"5030",
+			"5051"
+		}
+
 		files {
 
 			"al/eax/api.cpp",
@@ -150,7 +156,6 @@ project "OPENAL"
 			"al/eax/exception.cpp",
 			"al/eax/fx_slot_index.cpp",
 			"al/eax/fx_slots.cpp",
-			"al/eax/globals.cpp",
 			"al/eax/utils.cpp",
 			"alc/backends/dsound.cpp",
 			"alc/backends/wasapi.cpp",
