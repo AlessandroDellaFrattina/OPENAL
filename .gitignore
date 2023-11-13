@@ -36,3 +36,25 @@ CMakeLists.txt.user*
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
+
+# Codelite files
+Makefile
+.build-debug/
+.build-release/
+.build-dist/
+.codelite/
+**.workspace
+**.mk
+**.project
+**.txt
+
+# MacOSX Files
+**.command
+**.sh
+
+# Xcode Files
+**.xcworkspace
+**.xcworkspacedata
+**.xcodeproj
+**.pbxproj
+**.DS_Store
