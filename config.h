@@ -2,7 +2,7 @@
 #define FORCE_ALIGN
 
 //WINDOWS
-#if defined(VULTURE_PLATFORM_WINDOWS)
+#if defined(VE_PLATFORM_WINDOWS)
 
 /* Define if deprecated EAX extensions are enabled */
 #define ALSOFT_EAX
@@ -47,7 +47,7 @@
 #define HAVE_SSE_INTRINSICS
 
 //LINUX
-#elif defined (VULTURE_PLATFORM_LINUX)
+#elif defined (VE_PLATFORM_LINUX)
 
 /* Define if HRTF data is embedded in the library */
 #define ALSOFT_EMBED_HRTF_DATA
@@ -89,7 +89,7 @@
 #define HAVE_PTHREAD_SETSCHEDPARAM
 
 //MACOS
-#elif defined(VULTURE_PLATFORM_MACOSX)
+#elif defined(VE_PLATFORM_MACOSX)
 
 /* Define if HRTF data is embedded in the library */
 #define ALSOFT_EMBED_HRTF_DATA

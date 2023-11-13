@@ -117,13 +117,12 @@ project "OPENAL"
 	}
 
 	filter "system:windows"
-
 		systemversion "latest"
 		conformancemode "On"
 
 		defines {
 
-			"VULTURE_PLATFORM_WINDOWS",
+			"VE_PLATFORM_WINDOWS",
 			"AL_LIBTYPE_STATIC",
 			"WIN32",
 			"_WINDOWS",
@@ -163,10 +162,11 @@ project "OPENAL"
 		}
 
 	filter "system:linux"
+		pic "On"
 
 		defines {
 
-			"VULTURE_PLATFORM_LINUX",
+			"VE_PLATFORM_LINUX",
 			"AL_BUILD_LIBRARY",
 			"AL_ALEXT_PROTOTYPES",
 			"ALC_API=",
@@ -183,10 +183,11 @@ project "OPENAL"
 		}
 
 	filter "system:macosx"
+		pic "On"
 
 		defines {
 
-			"VULTURE_PLATFORM_MACOSX",
+			"VE_PLATFORM_MACOSX",
 			"AL_BUILD_LIBRARY",
 			"AL_ALEXT_PROTOTYPES",
 			"ALC_API=",
