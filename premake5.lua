@@ -162,7 +162,6 @@ project "OPENAL"
 		}
 
 	filter "system:linux"
-		pic "On"
 
 		defines {
 
@@ -183,7 +182,6 @@ project "OPENAL"
 		}
 
 	filter "system:macosx"
-		pic "On"
 
 		defines {
 
