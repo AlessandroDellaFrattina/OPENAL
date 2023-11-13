@@ -164,9 +164,6 @@ project "OPENAL"
 
 	filter "system:linux"
 
-		systemversion "latest"
-		pic "On"
-
 		defines {
 
 			"VULTURE_PLATFORM_LINUX",
@@ -179,14 +176,6 @@ project "OPENAL"
 			"AL_LIBTYPE_STATIC"
 		}
 
-		externalincludedirs {
-
-			"%{prj.location}",
-			"include",
-			"include/AL",
-			"common"
-		}
-
 		files {
 
 			"alc/backends/alsa.cpp",
@@ -194,9 +183,6 @@ project "OPENAL"
 		}
 
 	filter "system:macosx"
-
-		systemversion "max"
-		pic "On"
 
 		defines {
 
@@ -224,17 +210,17 @@ project "OPENAL"
 		}
 
 	filter "configurations:Debug"
-		defines "VULTURE_DEBUG"
+		defines "VE_DEBUG"
 		runtime "Debug"
 		symbols "On"
 
 	filter "configurations:Release"
-		defines "VULTURE_RELEASE"
-		runtime "Debug"
+		defines "VE_RELEASE"
+		runtime "Release"
 		symbols "On"
 		optimize "On"
 
 	filter "configurations:Dist"
-		defines "VULTURE_DIST"
+		defines "VE_DIST"
 		runtime "Release"
 		optimize "On"
