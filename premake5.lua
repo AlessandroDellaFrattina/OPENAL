@@ -2,9 +2,9 @@ project "OPENAL"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "Off"
-	targetdir ("%{wks.location}/bin/" .. outputdir .. "/lib")
-	objdir ("%{wks.location}/bin-int/" .. outputdir .. "/lib")
+	staticruntime (sruntime)
+	targetdir (bin)
+	objdir (binint)
 
 	includedirs {
 
@@ -209,17 +209,16 @@ project "OPENAL"
 		}
 
 	filter "configurations:Debug"
-		defines "VE_DEBUG"
-		runtime "Debug"
-		symbols "On"
+		runtime (debugruntime)
+		symbols (debugsymbols)
+		optimize (debugoptimize)
 
 	filter "configurations:Release"
-		defines "VE_RELEASE"
-		runtime "Release"
-		symbols "On"
-		optimize "On"
+		runtime (releaseruntime)
+		symbols (releasesymbols)
+		optimize (releaseoptimize)
 
 	filter "configurations:Dist"
-		defines "VE_DIST"
-		runtime "Release"
-		optimize "On"
+		runtime (distruntime)
+		symbols (distsymbols)
+		optimize (distoptimize)
